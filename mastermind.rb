@@ -17,16 +17,16 @@ module GameRules
   #contains the pins that say which numbers you got right
 end
 
-def game_start()
-  new_game = GameRounds.new(0)
-  player_role = Player.new(player_choice())
-  ai = AI.new("computer")
-  new_game = GameRounds.new(0)
-  new_game.round_count()
-  player_role.role == 0 ? player_role.pin_creation : ai.pin_creation_ai
-  binding.pry
-  round(new_game, player_role, ai)
-end
+    
+def random_guess_gen()
+  initial_guess = []
+    4.times do
+    initial_guess.push(rand(6))
+    end
+    return initial_guess 
+  end
+
+
 
 def round(new_game, player_role, ai)
 
@@ -63,9 +63,10 @@ end
 
 class AI
 include GameRules
-    attr_accessor :ai, :code
-    def initialize(ai)
+    attr_accessor :ai, :code, :guess, :initial_guess
+    def initialize(ai,initial_guess)
         @ai = ai
+        @initial_guess = initial_guess
     end
     def pin_creation_ai
     code = []
@@ -75,29 +76,44 @@ include GameRules
     end
     end
 
-    def guess(adjust)
-    code.push(5)
+      
+    def guess(feedback)
+      guess = random_guess_gen()
+      
+      feedback.each_index do |item, index| 
+        if(item != "R") 
+          guess[index] = rand(6) 
+        end
+      end
+      @guess = guess
 
-    end
+    
+  end
         #simple ai that keeps positions it gets right
 
 end
 
 class GameRounds
-  attr_accessor :code
-include GameRules
-  def initialize(code)
-      @code = code
+  include GameRules
+   attr_accessor :game
+  def initialize(game)
+    @game = game
   end
 
   def right_spot (guess, pins)
   feedback = []
-  pins.each_with_index
+  pins.each_with_index do |pin, index| 
+    
+    pin == guess[index] ? feedback.push("R") : feedback.push("W") 
   end
+  return feedback
+  end
+
   def wrong_position(guess, pins)
+
   feedback = []
-  pins.each_with_index
   end
+
   def correct_pins(guess, pins)
   if (guess == pins)   
     return true
@@ -105,6 +121,19 @@ include GameRules
   end
  #This is where the where the player decides to be the codemaker/breaker
     #also this is where the pins "live" and you recieve a response from the included gamechoices module
+
+end
+
+def game_start()
+
+  player_role = Player.new(player_choice())
+  ai = AI.new("computer",random_guess_gen)
+  
+  new_game = GameRounds.new("game")
+  new_game.round_count()
+  player_role.role == 0 ? player_role.pin_creation : ai.pin_creation_ai
+  binding.pry
+  round(new_game, player_role, ai)
 end
 
 game_start()
