@@ -28,11 +28,6 @@ def random_guess_gen()
 
 
 
-def round(new_game, player_role, ai)
-
-end
-
-
 def player_choice()
     puts "Welcome to MasterMind. Enter 0 to be the codemaker or 1 to be the codebreaker"
   until (("0".."1").include?(selected_role = gets.chomp))
@@ -43,9 +38,10 @@ end
 
 class Player
   include GameRules
-    attr_accessor :role, :code
-    def initialize(role)
+    attr_accessor :role, :code, :ai
+    def initialize(role,ai)
         @role = role
+        @ai = ai
     end
     
   def pin_creation
@@ -56,6 +52,8 @@ class Player
         split.each  { |item| code.push(item.to_i) }
         @code = code
   end  
+
+
     #has the ability to input a array of numbers and recieves a response
     #from the gamechoices module saying which pins are right
 
@@ -63,10 +61,9 @@ end
 
 class AI
 include GameRules
-    attr_accessor :ai, :code, :guess, :initial_guess
-    def initialize(ai,initial_guess)
+    attr_accessor :ai, :code, :guess
+    def initialize(ai)
         @ai = ai
-        @initial_guess = initial_guess
     end
     def pin_creation_ai
     code = []
@@ -78,14 +75,15 @@ include GameRules
 
       
     def guess(feedback)
-      guess = random_guess_gen()
       
-      feedback.each_index do |item, index| 
+      guess = code
+      
+      feedback.each_with_index do |item, index| 
         if(item != "R") 
           guess[index] = rand(6) 
         end
       end
-      @guess = guess
+      
 
     
   end
@@ -102,16 +100,18 @@ class GameRounds
 
   def right_spot (guess, pins)
   feedback = []
+
   pins.each_with_index do |pin, index| 
-    
-    pin == guess[index] ? feedback.push("R") : feedback.push("W") 
+
+    if (pin == guess[index]) 
+      feedback.push("R") 
+    elsif (pins.any?(guess[index]))
+    feedback.push("W")
+    else
+      feedback.push("N")
+    end
   end
   return feedback
-  end
-
-  def wrong_position(guess, pins)
-
-  feedback = []
   end
 
   def correct_pins(guess, pins)
@@ -126,14 +126,40 @@ end
 
 def game_start()
 
-  player_role = Player.new(player_choice())
-  ai = AI.new("computer",random_guess_gen)
-  
+  player_role = Player.new(player_choice(),"Player")
+  ai = AI.new("computer")
   new_game = GameRounds.new("game")
-  new_game.round_count()
-  player_role.role == 0 ? player_role.pin_creation : ai.pin_creation_ai
-  binding.pry
-  round(new_game, player_role, ai)
+  codemaker = player_role.role == 0 ? player_role : ai 
+  if(player_role.role == 0)
+      player_role.pin_creation 
+      ai.pin_creation_ai
+  else
+    puts "Put in your guess!"
+    player_role.pin_creation
+    ai.pin_creation_ai 
+  end
+
+  codebreaker = player_role.role != 0 ?  player_role : ai
+  round(new_game, codemaker, codebreaker)
+end
+
+
+def round(new_game, codemaker, codebreaker)
+  count = new_game.round_count.to_i
+
+  until  count == 0 || new_game.correct_pins(codebreaker.code, codemaker.code)
+    feedback = new_game.right_spot(codebreaker.code,codemaker.code)
+
+    if (codebreaker.ai == "computer")  
+      codebreaker.guess(feedback)
+    elsif (codebreaker.ai == "Player")
+      codebreaker.pin_creation
+    end 
+    p codebreaker.code
+    p feedback
+   
+    count -= 1
+  end
 end
 
 game_start()
