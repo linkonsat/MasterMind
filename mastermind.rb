@@ -119,34 +119,48 @@ class GameRounds
     return true
   end
   end
- #This is where the where the player decides to be the codemaker/breaker
-    #also this is where the pins "live" and you recieve a response from the included gamechoices module
-
+  def result(codemaker, codebreaker)
+    if (codebreaker.code == codemaker.code)
+      puts "You win codebreaker!"
+    else 
+      puts "You lost :(. the code was #{codemaker.code}"
+    end
+  end
 end
 
+def checker?(player_role, ai)
+  if(player_role.role == 0)
+    player_role.pin_creation 
+    ai.pin_creation_ai
+else
+  ai.pin_creation_ai
+end
+end
 def game_start()
 
   player_role = Player.new(player_choice(),"Player")
   ai = AI.new("computer")
   new_game = GameRounds.new("game")
   codemaker = player_role.role == 0 ? player_role : ai 
-  if(player_role.role == 0)
-      player_role.pin_creation 
-      ai.pin_creation_ai
-  else
-    puts "Put in your guess!"
-    player_role.pin_creation
-    ai.pin_creation_ai 
-  end
-
+  binding.pry
+  checker?(player_role,ai)
+binding.pry
   codebreaker = player_role.role != 0 ?  player_role : ai
-  round(new_game, codemaker, codebreaker)
+  puts "MasterMind is a game where you try and break the code created by the codemaker.
+      \nYou will recieve feedback each round. A 'R' indicates it's the right number and spot
+      \nA 'W' indicates the right number but wrong place whereas a 'N' indicates none are right. GL!"
+  game_rounds(new_game, codemaker, codebreaker)
 end
 
 
-def round(new_game, codemaker, codebreaker)
+def game_rounds(new_game, codemaker, codebreaker)
   count = new_game.round_count.to_i
-
+  if(codebreaker.ai == "Player")
+  puts "Put in your guess!"
+  codebreaker.pin_creation
+  p  new_game.right_spot(codebreaker.code,codemaker.code)
+  end
+ 
   until  count == 0 || new_game.correct_pins(codebreaker.code, codemaker.code)
     feedback = new_game.right_spot(codebreaker.code,codemaker.code)
 
@@ -157,9 +171,16 @@ def round(new_game, codemaker, codebreaker)
     end 
     p codebreaker.code
     p feedback
-   
     count -= 1
   end
+  rerun(new_game, codemaker, codebreaker)
 end
 
+def rerun(new_game, codemaker, codebreaker)
+  new_game.result(codemaker,codebreaker)
+  puts "If you would like to play again enter Y or enter any other character"
+  if (response = gets.chomp == "Y")
+    game_start()
+  end
+end
 game_start()
